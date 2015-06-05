@@ -27,7 +27,9 @@ app.get('/', function (req, res) {
                 'method': 'POST',
                 'info': 'Get tweet length (twitter.getTweetLength)',
                 'params': {
-                    'text': '(string) Tweet text'
+                    'text': '(string) Tweet text',
+                    'media': '(boolean) Reserve characters for media',
+                    'reserve': '(integer) Number of extra characters to reserve'
                 }
             },
             '/tweet/truncate': {
@@ -55,8 +57,19 @@ app.post('/tweet/length', function (req, res) {
         return res.json('text required');
     }
 
-    var length = twitter.getTweetLength(text, config);
-    res.json(length);
+    var reserve = req.body.reserve || 0;
+
+    var length = tweetLength(text, config) + reserve;
+    if (req.body.media) {
+        length += config['characters_reserved_per_media'];
+    }
+
+    var remaining = MAX_TWEET_LENGTH - length;
+
+    res.json({
+        length: length,
+        remaining: remaining
+    });
 });
 
 app.post('/tweet/truncate', function (req, res) {
