@@ -5,9 +5,9 @@ var express = require('express'),
 
 var app = express(),
     config = {
-        short_url_length: 22,
+        short_url_length: 23,
         short_url_length_https: 23,
-        characters_reserved_per_media: 23
+        characters_reserved_per_media: 24
     },
     MAX_TWEET_LENGTH = 140,
     CONFIG_UPDATE_INTERVAL = 1 * 24 * 60 * 60 * 1000;     // 1 day
