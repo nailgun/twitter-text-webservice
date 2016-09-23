@@ -6,8 +6,7 @@ var express = require('express'),
 var app = express(),
     config = {
         short_url_length: 23,
-        short_url_length_https: 23,
-        characters_reserved_per_media: 24
+        short_url_length_https: 23
     },
     MAX_TWEET_LENGTH = 140,
     CONFIG_UPDATE_INTERVAL = 1 * 24 * 60 * 60 * 1000;     // 1 day
@@ -58,12 +57,7 @@ app.post('/tweet/length', function (req, res) {
     }
 
     var reserve = req.body.reserve || 0;
-
     var length = tweetLength(text, config) + reserve;
-    if (req.body.media) {
-        length += config['characters_reserved_per_media'];
-    }
-
     var remaining = MAX_TWEET_LENGTH - length;
 
     res.json({
@@ -80,14 +74,8 @@ app.post('/tweet/truncate', function (req, res) {
     }
 
     var ellipsis = req.body.ellipsis || '',
-        reserve = req.body.reserve || 0;
-
-    if (req.body.media) {
-        maxTweetLength = MAX_TWEET_LENGTH - config['characters_reserved_per_media'];
-    } else {
-        maxTweetLength = MAX_TWEET_LENGTH;
-    }
-    maxTweetLength -= reserve;
+        reserve = req.body.reserve || 0,
+        maxTweetLength = MAX_TWEET_LENGTH - reserve;
 
     text = text.trim();
 
