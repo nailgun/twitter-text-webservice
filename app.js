@@ -8,7 +8,7 @@ var app = express(),
         short_url_length: 23,
         short_url_length_https: 23
     },
-    MAX_TWEET_LENGTH = 140,
+    MAX_TWEET_LENGTH = 280,
     CONFIG_UPDATE_INTERVAL = 1 * 24 * 60 * 60 * 1000;     // 1 day
 
 app.use(bodyParser.json());
