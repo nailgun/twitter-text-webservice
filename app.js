@@ -136,8 +136,14 @@ if (process.env.API_KEY && process.env.API_SECRET) {
 }
 
 function tweetLength (text) {
-    var emojiReplacement = '??',
-        textEmojiReplaced = Array(emoji.onlyEmoji(text).length + 1).join(emojiReplacement),
+    var emojiReplacement = '????',  // emoji + variant selector
+        joiner = '\u{200D}',
+        components;
+        textEmojiReplaced = emoji.onlyEmoji(text).map(function(emoji) {
+            emoji = emoji.replace(/[\ufe00-\ufe0f]/gu, '');  // rm variant selectors
+            components = emoji.split(joiner);
+            return Array(components.length + 1).join(emojiReplacement);
+        }).join(''),
         textNoEmoji = emoji.withoutEmoji(text).join('');
     return twitter.getTweetLength(textNoEmoji + textEmojiReplaced, config);
 }
