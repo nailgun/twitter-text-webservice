@@ -1,5 +1,6 @@
 var express = require('express'),
     request = require('request'),
+    emoji = require('emoji-aware'),
     twitter = require('twitter-text'),
     bodyParser = require('body-parser');
 
@@ -57,7 +58,7 @@ app.post('/tweet/length', function (req, res) {
     }
 
     var reserve = req.body.reserve || 0;
-    var length = tweetLength(text, config) + reserve;
+    var length = tweetLength(text) + reserve;
     var remaining = MAX_TWEET_LENGTH - length;
 
     res.json({
@@ -135,7 +136,10 @@ if (process.env.API_KEY && process.env.API_SECRET) {
 }
 
 function tweetLength (text) {
-    return twitter.getTweetLength(text, config);
+    var emojiReplacement = '??',
+        textEmojiReplaced = Array(emoji.onlyEmoji(text).length + 1).join(emojiReplacement),
+        textNoEmoji = emoji.withoutEmoji(text).join('');
+    return twitter.getTweetLength(textNoEmoji + textEmojiReplaced, config);
 }
 
 function cleanTweetEnding (text) {
