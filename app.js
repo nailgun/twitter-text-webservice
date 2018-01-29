@@ -1,6 +1,5 @@
 var express = require('express'),
     request = require('request'),
-    emoji = require('emoji-aware'),
     twitter = require('twitter-text'),
     bodyParser = require('body-parser');
 
@@ -75,6 +74,7 @@ app.post('/tweet/truncate', function (req, res) {
     }
 
     var ellipsis = req.body.ellipsis || '',
+        ellipsisLen = tweetLength(ellipsis),
         reserve = req.body.reserve || 0,
         maxTweetLength = MAX_TWEET_LENGTH - reserve;
 
@@ -86,12 +86,12 @@ app.post('/tweet/truncate', function (req, res) {
 
     words.every(function (word) {
         var wordLen = tweetLength(word);
-        if (tweetLen + wordLen + ellipsis.length > maxTweetLength) {
+        if (tweetLen + wordLen + ellipsisLen > maxTweetLength) {
             var cleanedWord = cleanTweetEnding(word);
-            wordLen -= word.length - cleanedWord.length;
+            wordLen -= tweetLength(word) - tweetLength(cleanedWord);
             word = cleanedWord;
 
-            if (tweetLen + wordLen + ellipsis.length <= maxTweetLength) {
+            if (tweetLen + wordLen + ellipsisLen <= maxTweetLength) {
                 tweet += word;
                 tweetLen += wordLen;
             }
@@ -109,8 +109,13 @@ app.post('/tweet/truncate', function (req, res) {
         tweet = cleanTweetEnding(tweet) + ellipsis;
     } else {
         // fallback
-        if (text.length > maxTweetLength) {
-            tweet = text.substring(0, maxTweetLength - ellipsis.length) + ellipsis;
+        if (tweetLength(text) > maxTweetLength) {
+            tweet = text.substring(0, maxTweetLength - ellipsisLen) + ellipsis;
+            // remain chars may have twitter-length > 1 so do one more check:
+            var tweetOverLength = tweetLength(tweet) - maxTweetLength;
+            if (tweetOverLength > 0) {
+                tweet = text.substring(0, maxTweetLength - tweetOverLength - ellipsisLen) + ellipsis;
+            }
         } else {
             tweet = text;
         }
@@ -136,16 +141,7 @@ if (process.env.API_KEY && process.env.API_SECRET) {
 }
 
 function tweetLength (text) {
-    var emojiReplacement = '????',  // emoji + variant selector
-        joiner = '\u{200D}',
-        components;
-        textEmojiReplaced = emoji.onlyEmoji(text).map(function(emoji) {
-            emoji = emoji.replace(/[\ufe00-\ufe0f]/gu, '');  // rm variant selectors
-            components = emoji.split(joiner);
-            return Array(components.length + 1).join(emojiReplacement);
-        }).join(''),
-        textNoEmoji = emoji.withoutEmoji(text).join('');
-    return twitter.getTweetLength(textNoEmoji + textEmojiReplaced, config);
+    return twitter.getTweetLength(text, config);
 }
 
 function cleanTweetEnding (text) {
